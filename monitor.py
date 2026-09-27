@@ -93,12 +93,28 @@ class Monitor:
             pnl: Profit/loss in account currency (for closed trades)
             comment: Additional comment
         """
+        def sanitize_csv_field(value):
+            if isinstance(value, str):
+                stripped = value.strip()
+                if stripped and stripped[0] in ('=', '+', '-', '@'):
+                    return "'" + value
+            return value
+
         timestamp = datetime.now().isoformat()
         with open(self.trade_log_file, 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([
-                timestamp, symbol, signal, lot_size, entry_price,
-                stop_loss, take_profit, order_id, status, pnl, comment
+                timestamp,
+                sanitize_csv_field(symbol),
+                sanitize_csv_field(signal),
+                lot_size,
+                entry_price,
+                stop_loss,
+                take_profit,
+                order_id,
+                sanitize_csv_field(status),
+                pnl,
+                sanitize_csv_field(comment)
             ])
 
         self.logger.info(

@@ -128,9 +128,9 @@ class DataEngine:
         df['mid_price'] = (df['bid'] + df['ask']) / 2
 
         # Resample to 1-minute OHLCV
-        ohlc = df['mid_price'].resample('1T').ohlc()
+        ohlc = df['mid_price'].resample('1min').ohlc()
         ohlc.columns = ['open', 'high', 'low', 'close']
-        volume = df['volume'].resample('1T').sum()
+        volume = df['volume'].resample('1min').sum()
 
         # Combine
         bars = pd.concat([ohlc, volume], axis=1)
