@@ -13,6 +13,8 @@ from risk_manager import RiskManager, TradeRisk
 from position_sizer import PositionSizer, PositionSize
 from execution_engine import ExecutionEngine, TradeOrder, TradeResult
 from monitor import Monitor
+from prop_firm_manager import PropFirmManager
+from news_filter import NewsFilter
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -40,9 +42,16 @@ class TradingBot:
         self.execution_engine = ExecutionEngine(magic_number=self.config['execution']['magic_number'])
         self.monitor = Monitor(self.config)
 
+        # Prop firm additions
+        # Assuming initial balance is retrieved or set to a default (e.g., 10000)
+        self.initial_balance = self.config.get('initial_balance', 10000.0)
+        self.prop_firm_manager = PropFirmManager(initial_balance=self.initial_balance)
+        self.news_filter = NewsFilter()
+
         # State tracking
         self.open_positions: Dict[int, Dict] = {}  # ticket -> position info
         self.account_equity = 0.0
+        self.account_balance = 0.0
         self.is_running = False
 
         # Initialize components
@@ -103,6 +112,7 @@ class TradingBot:
             account_info = mt5.account_info()
             if account_info is not None:
                 self.account_equity = account_info.equity
+                self.account_balance = account_info.balance
                 logger.debug(f"Account equity updated: {self.account_equity}")
             else:
                 logger.warning("Could not get account info")
@@ -172,6 +182,17 @@ class TradingBot:
 
     def _generate_and_process_signal(self, symbol: str, bar_time: datetime):
         """Generate signal for symbol and process if actionable."""
+
+        # 1. Prop Firm Check
+        if not self.prop_firm_manager.is_trading_allowed(self.account_equity, self.account_balance, bar_time):
+            logger.debug(f"Trading halted by PropFirmManager for {symbol} at {bar_time}")
+            return
+
+        # 2. News Filter Check
+        if not self.news_filter.is_trading_allowed(symbol, bar_time):
+            logger.debug(f"Trading skipped due to news for {symbol} at {bar_time}")
+            return
+
         # Get signal engine
         signal_engine = self.signal_engines[symbol]
 
