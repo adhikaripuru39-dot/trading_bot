@@ -27,7 +27,8 @@ class NewsFilter:
         Check if trading is allowed for a symbol at the given time.
         """
         # Determine currencies in the symbol (e.g., 'EURUSD' -> 'EUR', 'USD')
-        currencies = [symbol[:3], symbol[3:]]
+        # We slice precisely to 3 and 3:6 to avoid matching 'USD.pro' or suffix issues
+        currencies = [symbol[:3], symbol[3:6]]
 
         for event in self.news_events:
             # Check if event affects the symbol's currencies and is high impact
