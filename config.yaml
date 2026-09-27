@@ -1,0 +1,68 @@
+risk_per_trade: 0.01
+pairs:
+  - symbol: XAUUSD
+    timeframe: M1
+    signal:
+      type: sma_crossover
+      fast: 50
+      slow: 200
+    risk:
+      atr_period: 14
+      sl_mult: 1.5
+      tp_mult: 3.0
+  - symbol: EURUSD
+    timeframe: M1
+    signal:
+      type: sma_crossover
+      fast: 50
+      slow: 200
+    risk:
+      atr_period: 14
+      sl_mult: 1.5
+      tp_mult: 3.0
+  - symbol: USDJPY
+    timeframe: M1
+    signal:
+      type: sma_crossover
+      fast: 50
+      slow: 200
+    risk:
+      atr_period: 14
+      sl_mult: 1.5
+      tp_mult: 3.0
+  - symbol: GBPUSD
+    timeframe: M1
+    signal:
+      type: sma_crossover
+      fast: 50
+      slow: 200
+    risk:
+      atr_period: 14
+      sl_mult: 1.5
+      tp_mult: 3.0
+  - symbol: USDCHF
+    timeframe: M1
+    signal:
+      type: sma_crossover
+      fast: 50
+      slow: 200
+    risk:
+      atr_period: 14
+      sl_mult: 1.5
+      tp_mult: 3.0
+  - symbol: USDCAD
+    timeframe: M1
+    signal:
+      type: sma_crossover
+      fast: 50
+      slow: 200
+    risk:
+      atr_period: 14
+      sl_mult: 1.5
+      tp_mult: 3.0
+execution:
+  slippage_pips: 1
+  magic_number: 123456
+logging:
+  level: INFO
+  file: logs/bot.log
