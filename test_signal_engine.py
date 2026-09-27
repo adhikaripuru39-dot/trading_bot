@@ -9,7 +9,7 @@ def test_sma_crossover():
 
     # Create sample OHLCV data
     # We'll create a dataset that has a clear crossover
-    dates = pd.date_range(start='2023-01-01', periods=100, freq='1T', tz='UTC')
+    dates = pd.date_range(start='2023-01-01', periods=100, freq='1min', tz='UTC')
 
     # Create a price series that goes up then down to create a crossover
     # Let's make a simple pattern: first 50 bars rising, next 50 bars falling
@@ -25,7 +25,7 @@ def test_sma_crossover():
     # However, to test the actual engine, we should use the same parameters but generate enough data.
     # Let's generate 300 bars of data.
 
-    dates = pd.date_range(start='2023-01-01', periods=300, freq='1T', tz='UTC')
+    dates = pd.date_range(start='2023-01-01', periods=300, freq='1min', tz='UTC')
 
     # Create a price series:
     #   First 100 bars: steady at 1.1000
