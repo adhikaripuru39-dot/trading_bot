@@ -66,3 +66,6 @@ execution:
 logging:
   level: INFO
   file: logs/bot.log
+telegram:
+  bot_token: ""
+  chat_id: ""

@@ -3,3 +3,4 @@ MetaTrader5
 pyyaml
 matplotlib
 numpy
+requests

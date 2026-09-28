@@ -15,6 +15,7 @@ from execution_engine import ExecutionEngine, TradeOrder, TradeResult
 from monitor import Monitor
 from prop_firm_manager import PropFirmManager
 from news_filter import NewsFilter
+from telegram_dashboard import TelegramDashboard
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -47,6 +48,16 @@ class TradingBot:
         self.initial_balance = self.config.get('initial_balance', 10000.0)
         self.prop_firm_manager = PropFirmManager(initial_balance=self.initial_balance)
         self.news_filter = NewsFilter()
+
+        # Telegram Dashboard
+        tg_config = self.config.get('telegram', {})
+        self.telegram_dashboard = None
+        if tg_config.get('bot_token') and tg_config.get('chat_id'):
+            self.telegram_dashboard = TelegramDashboard(
+                bot_token=tg_config['bot_token'],
+                chat_id=str(tg_config['chat_id'])
+            )
+        self.last_dashboard_update = 0.0
 
         # State tracking
         self.open_positions: Dict[int, Dict] = {}  # ticket -> position info
@@ -340,6 +351,44 @@ class TradingBot:
         self._update_account_equity()
         # Could also check margin, free margin, etc.
 
+    def _update_telegram_dashboard(self):
+        """Update Telegram dashboard non-blockingly."""
+        if not self.telegram_dashboard:
+            return
+
+        current_time = time.time()
+        # Update every 10 seconds to avoid Telegram API rate limits
+        if current_time - self.last_dashboard_update < 10.0:
+            return
+
+        # Calculate Expected Profit and total Risk
+        expected_profit = self.account_equity - self.account_balance
+
+        # Calculate Risk Amount (if all SLs are hit)
+        total_risk_amount = 0.0
+        contract_size = 100000.0 # Default fallback
+        for ticket, pos in self.open_positions.items():
+            if pos['signal'] == 'BUY':
+                risk = (pos['entry_price'] - pos['initial_sl']) * pos['lot_size'] * contract_size
+            else:
+                risk = (pos['initial_sl'] - pos['entry_price']) * pos['lot_size'] * contract_size
+            total_risk_amount += max(0, risk) # Ensure risk is positive
+
+        # Offload update to avoid blocking trade execution
+        # (For complete safety, one might use a thread, but for a 10s loop a quick request timeout is usually OK)
+        try:
+            self.telegram_dashboard.update_dashboard(
+                equity=self.account_equity,
+                expected_profit=expected_profit,
+                risk_amount=total_risk_amount,
+                num_trades=len(self.open_positions),
+                balance=self.account_balance
+            )
+        except Exception as e:
+            logger.error(f"Error updating dashboard: {e}")
+
+        self.last_dashboard_update = current_time
+
     def run(self):
         """Main trading loop."""
         logger.info("Starting trading bot...")
@@ -358,6 +407,9 @@ class TradingBot:
 
                 # Manage open positions
                 self._manage_open_positions()
+
+                # Update Telegram Dashboard
+                self._update_telegram_dashboard()
 
                 # Sleep to avoid excessive CPU usage
                 elapsed = time.time() - start_time
