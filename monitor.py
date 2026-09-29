@@ -75,6 +75,22 @@ class Monitor:
         )
         # Could also log to a separate signals file if needed
 
+    def _sanitize_csv_field(self, field: Any) -> Any:
+        """Sanitize a field to prevent CSV injection."""
+        if not isinstance(field, str):
+            return field
+
+        try:
+            # Check if it's purely numeric
+            float(field)
+            return field
+        except ValueError:
+            pass
+
+        if field and field[0] in ('=', '+', '-', '@'):
+            return f"'{field}"
+        return field
+
     def log_trade(self, symbol: str, signal: str, lot_size: float, entry_price: float,
                   stop_loss: float, take_profit: float, order_id: Optional[int],
                   status: str, pnl: float = 0.0, comment: str = ""):
@@ -94,12 +110,14 @@ class Monitor:
             comment: Additional comment
         """
         timestamp = datetime.now().isoformat()
+        row = [
+            timestamp, symbol, signal, lot_size, entry_price,
+            stop_loss, take_profit, order_id, status, pnl, comment
+        ]
+        sanitized_row = [self._sanitize_csv_field(field) for field in row]
         with open(self.trade_log_file, 'a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([
-                timestamp, symbol, signal, lot_size, entry_price,
-                stop_loss, take_profit, order_id, status, pnl, comment
-            ])
+            writer.writerow(sanitized_row)
 
         self.logger.info(
             f"TRADE - {symbol}: {signal} {lot_size} lots @ {entry_price:.5f} "
