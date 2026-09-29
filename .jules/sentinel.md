@@ -1,0 +1,4 @@
+## 2024-05-24 - [Fix CSV Injection Vulnerability]
+**Vulnerability:** CSV Injection via Python's `csv` module when writing user-controlled fields (like `comment` in trade logs).
+**Learning:** Spreadsheets (Excel, Google Sheets) execute content starting with `=`, `+`, `-`, or `@`. The default Python `csv` module does not sanitize these, leading to potential RCE or data exfiltration if logs are opened.
+**Prevention:** Sanitize fields by prepending a single quote (`'`) to strings starting with those characters. Always attempt to cast to `float` first to exclude purely numeric strings (like negative numbers `-150.50`) from sanitization to prevent data corruption.
