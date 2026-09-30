@@ -1,0 +1,4 @@
+## 2024-05-24 - [Fix CSV Injection Vulnerability in Monitor Logs]
+**Vulnerability:** The `Monitor` class in `monitor.py` was directly writing unsanitized inputs to a CSV file. Fields like comments could start with `=`, `+`, `-`, or `@`, which are executable by spreadsheet software like Excel, potentially leading to CSV injection (Formula Injection).
+**Learning:** External or user-provided inputs logged into CSV files must always be sanitized. Spreadsheets interpret leading characters such as `=`, `+`, `-`, and `@` as formulas, posing a security risk if the log is opened. Purely numeric values (e.g., `-150.50`) should be exempted to preserve proper numeric types.
+**Prevention:** Always sanitize data written to CSVs by prepending a single quote (`'`) to strings starting with `=`, `+`, `-`, or `@` if they cannot be cast to a float. Implement a generic sanitization function for all CSV exports.
