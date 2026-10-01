@@ -1,0 +1,4 @@
+## 2026-10-01 - [CSV Injection Vulnerability in Trade Monitoring]
+**Vulnerability:** Found a CSV injection vulnerability in `monitor.py` where trade logs (e.g. `comment` or `status` fields) were directly written into `trades.csv` without sanitization. An attacker supplying a field starting with `=`, `+`, `-`, or `@` could trigger code execution if the CSV is opened in Excel.
+**Learning:** Automatically escaping all strings starting with these characters breaks pure numerical data like negative numbers (e.g., `-150.50`), which is critical for trade logs. A safe sanitization approach must attempt to parse pure numeric strings as floats and leave them untouched.
+**Prevention:** Always sanitize untrusted input before writing to CSV files. Ensure sanitization logic (`_sanitize_csv_field`) ignores purely numerical values by validating them with `float()` prior to prepending a single quote (`'`).
