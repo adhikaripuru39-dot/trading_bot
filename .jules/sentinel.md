@@ -1,0 +1,4 @@
+## 2026-10-03 - [CSV Injection Vulnerability in Monitor Logging]
+**Vulnerability:** The `log_trade` method in `Monitor` writes trading data directly to a CSV file (`trades.csv`) without sanitizing input fields, specifically the string fields like `symbol` and `comment`. This could allow CSV injection if user-controlled or malicious data is passed into these fields.
+**Learning:** Even internal logging mechanisms can be vulnerable to CSV injection if they handle data that could originate from external sources or inputs, and writing directly to CSV using standard libraries doesn't automatically protect against formula injection.
+**Prevention:** Always sanitize string fields before writing them to CSV by prepending a single quote (`'`) to values that start with formula characters (`=`, `+`, `-`, `@`), being careful not to corrupt purely numeric data.
