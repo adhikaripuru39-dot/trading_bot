@@ -49,6 +49,21 @@ class Monitor:
 
         self.logger.info("Monitor initialized")
 
+    def _sanitize_csv_value(self, val: Any) -> Any:
+        """
+        Sanitize value to prevent CSV Injection.
+        Prepends a single quote to strings starting with '=', '+', '-', or '@',
+        unless the string represents a purely numeric value.
+        """
+        if isinstance(val, str) and val.startswith(('=', '+', '-', '@')):
+            # Check if it's purely numeric
+            try:
+                float(val)
+                return val
+            except ValueError:
+                return f"'{val}"
+        return val
+
     def _init_trade_log(self):
         """Initialize the trade log CSV file with headers if it doesn't exist"""
         if not self.trade_log_file.exists():
@@ -94,12 +109,16 @@ class Monitor:
             comment: Additional comment
         """
         timestamp = datetime.now().isoformat()
+
+        row = [
+            timestamp, symbol, signal, lot_size, entry_price,
+            stop_loss, take_profit, order_id, status, pnl, comment
+        ]
+        sanitized_row = [self._sanitize_csv_value(val) for val in row]
+
         with open(self.trade_log_file, 'a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([
-                timestamp, symbol, signal, lot_size, entry_price,
-                stop_loss, take_profit, order_id, status, pnl, comment
-            ])
+            writer.writerow(sanitized_row)
 
         self.logger.info(
             f"TRADE - {symbol}: {signal} {lot_size} lots @ {entry_price:.5f} "
