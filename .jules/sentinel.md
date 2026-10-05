@@ -1,0 +1,4 @@
+## 2023-10-27 - CSV Injection Prevention in Trade Logs
+**Vulnerability:** The trade logging mechanism in `monitor.py` was saving unsanitized strings directly to a CSV file. If an attacker controlled input strings such as comments or symbols (e.g. `=cmd|' /C calc'!A0`), when the CSV file is opened in Excel, this could lead to arbitrary command execution (CSV Injection).
+**Learning:** Purely numeric strings (e.g. `'-150.50'`) can sometimes be misinterpreted by naive CSV sanitization rules that escape any leading `-` characters, corrupting downstream data parsers. Proper implementation needs to handle numerical string exceptions.
+**Prevention:** Implementing a sanitization helper `_sanitize_csv_value` in the Monitor class that checks if a value starts with `=`, `+`, `-`, or `@`. It attempts to cast the value to a float, and if it fails, it prepends a single quote `'` to neutralize the payload while preserving data integrity for true numerics.
