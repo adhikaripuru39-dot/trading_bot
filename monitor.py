@@ -12,6 +12,24 @@ class Monitor:
     Handles logging, monitoring, and reporting for the trading bot.
     """
 
+    @staticmethod
+    def _sanitize_csv_value(value: Any) -> Any:
+        """
+        Sanitize string values to prevent CSV injection vulnerabilities.
+        Prepends a single quote to strings starting with =, +, -, or @
+        unless they are purely numeric (like negative numbers).
+        """
+        if not isinstance(value, str) or not value:
+            return value
+
+        if value[0] in ('=', '+', '-', '@'):
+            try:
+                float(value)
+                return value
+            except ValueError:
+                return f"'{value}"
+        return value
+
     def __init__(self, config: Dict[str, Any]):
         """
         Initialize the monitor.
@@ -94,12 +112,15 @@ class Monitor:
             comment: Additional comment
         """
         timestamp = datetime.now().isoformat()
+        row = [
+            timestamp, symbol, signal, lot_size, entry_price,
+            stop_loss, take_profit, order_id, status, pnl, comment
+        ]
+        sanitized_row = [self._sanitize_csv_value(val) for val in row]
+
         with open(self.trade_log_file, 'a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([
-                timestamp, symbol, signal, lot_size, entry_price,
-                stop_loss, take_profit, order_id, status, pnl, comment
-            ])
+            writer.writerow(sanitized_row)
 
         self.logger.info(
             f"TRADE - {symbol}: {signal} {lot_size} lots @ {entry_price:.5f} "
