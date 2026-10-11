@@ -49,16 +49,32 @@ class Monitor:
 
         self.logger.info("Monitor initialized")
 
+    def _sanitize_csv_value(self, value: Any) -> Any:
+        """Sanitize values to prevent CSV injection vulnerabilities."""
+        if not isinstance(value, str):
+            return value
+
+        if value and value[0] in ('=', '+', '-', '@'):
+            # Allow purely numeric strings (like '-150.50' or '+10')
+            try:
+                float(value)
+                return value
+            except ValueError:
+                # Prepend a single quote to prevent formula execution
+                return f"'{value}"
+        return value
+
     def _init_trade_log(self):
         """Initialize the trade log CSV file with headers if it doesn't exist"""
         if not self.trade_log_file.exists():
             with open(self.trade_log_file, 'w', newline='') as f:
                 writer = csv.writer(f)
-                writer.writerow([
+                headers = [
                     'timestamp', 'symbol', 'signal', 'lot_size', 'entry_price',
                     'stop_loss', 'take_profit', 'order_id', 'status', 'pnl',
                     'comment'
-                ])
+                ]
+                writer.writerow([self._sanitize_csv_value(h) for h in headers])
 
     def log_signal(self, symbol: str, signal_result: Any, bar_time: datetime):
         """
@@ -96,10 +112,11 @@ class Monitor:
         timestamp = datetime.now().isoformat()
         with open(self.trade_log_file, 'a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([
+            row = [
                 timestamp, symbol, signal, lot_size, entry_price,
                 stop_loss, take_profit, order_id, status, pnl, comment
-            ])
+            ]
+            writer.writerow([self._sanitize_csv_value(v) for v in row])
 
         self.logger.info(
             f"TRADE - {symbol}: {signal} {lot_size} lots @ {entry_price:.5f} "
