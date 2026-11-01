@@ -1,0 +1,4 @@
+## 2025-02-14 - Fix CSV Injection in monitor.py
+**Vulnerability:** The bot logs trades into `trades.csv` without sanitizing string fields like `comment`, `symbol`, `signal`, or `status`. If any of these fields started with `=`, `+`, `-`, or `@` (e.g. via an external news event or malicious log injection), opening the CSV in spreadsheet software could result in malicious formula execution (CSV Injection).
+**Learning:** CSV logging mechanisms in trading bots are vulnerable to injection attacks if string inputs are uncontrolled. Explicit sanitization for formula starters is required, taking care not to break genuinely numerical values (like PNL or negative values) by ignoring purely numerical strings.
+**Prevention:** Implement sanitization helpers when writing to CSV files. The helper should prepend a single quote (`'`) to string fields starting with formula characters, and explicitly exclude numeric types by attempting a float cast or using regex.
