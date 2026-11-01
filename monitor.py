@@ -60,6 +60,23 @@ class Monitor:
                     'comment'
                 ])
 
+    def _sanitize_csv_field(self, field: str) -> str:
+        """
+        Sanitize string fields to prevent CSV injection.
+        Prepends a single quote if the field starts with =, +, -, or @
+        unless it is purely numeric.
+        """
+        if not isinstance(field, str):
+            field = str(field)
+        if field and field[0] in ('=', '+', '-', '@'):
+            # Allow purely numeric strings like '-150.50'
+            try:
+                float(field)
+                return field
+            except ValueError:
+                return f"'{field}"
+        return field
+
     def log_signal(self, symbol: str, signal_result: Any, bar_time: datetime):
         """
         Log a trading signal.
@@ -94,11 +111,17 @@ class Monitor:
             comment: Additional comment
         """
         timestamp = datetime.now().isoformat()
+
+        safe_symbol = self._sanitize_csv_field(symbol)
+        safe_signal = self._sanitize_csv_field(signal)
+        safe_status = self._sanitize_csv_field(status)
+        safe_comment = self._sanitize_csv_field(comment)
+
         with open(self.trade_log_file, 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([
-                timestamp, symbol, signal, lot_size, entry_price,
-                stop_loss, take_profit, order_id, status, pnl, comment
+                timestamp, safe_symbol, safe_signal, lot_size, entry_price,
+                stop_loss, take_profit, order_id, safe_status, pnl, safe_comment
             ])
 
         self.logger.info(
