@@ -1,0 +1,4 @@
+## 2023-11-09 - CSV Injection Vulnerability in Trade Logs
+**Vulnerability:** Trade data logged to CSV format in `monitor.py` does not sanitize string fields, which could allow malicious inputs (e.g., in trade comments or symbols) starting with '=', '+', '-', or '@' to execute arbitrary commands if opened in spreadsheet software like Excel.
+**Learning:** Even internal logging mechanisms can be vectors for injection attacks if data might eventually be viewed in a rich client application like Excel. Whitespace can be used to bypass prefix checks.
+**Prevention:** Sanitize all string fields written to CSVs by stripping leading whitespace and prepending a single quote (`'`) to values starting with danger characters (`=`, `+`, `-`, `@`), being careful to exclude purely numeric strings to avoid breaking numerical parsing downstream.

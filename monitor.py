@@ -49,6 +49,18 @@ class Monitor:
 
         self.logger.info("Monitor initialized")
 
+    @staticmethod
+    def _sanitize_csv_value(val: Any) -> Any:
+        """Sanitize CSV string fields to prevent CSV injection."""
+        if isinstance(val, str):
+            val = val.lstrip()
+            if val and val[0] in ('=', '+', '-', '@'):
+                try:
+                    float(val)
+                except ValueError:
+                    val = "'" + val
+        return val
+
     def _init_trade_log(self):
         """Initialize the trade log CSV file with headers if it doesn't exist"""
         if not self.trade_log_file.exists():
@@ -97,8 +109,13 @@ class Monitor:
         with open(self.trade_log_file, 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([
-                timestamp, symbol, signal, lot_size, entry_price,
-                stop_loss, take_profit, order_id, status, pnl, comment
+                timestamp,
+                self._sanitize_csv_value(symbol),
+                self._sanitize_csv_value(signal),
+                lot_size, entry_price, stop_loss, take_profit, order_id,
+                self._sanitize_csv_value(status),
+                pnl,
+                self._sanitize_csv_value(comment)
             ])
 
         self.logger.info(
